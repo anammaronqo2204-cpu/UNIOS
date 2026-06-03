@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-light-gray;
+  }
+
+  body {
+    @apply bg-off-white text-near-black;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-mid-gray/30 rounded-full hover:bg-mid-gray/50 transition-colors;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-vibrant-violet to-electric-blue text-white font-medium
+           px-5 py-2.5 rounded-lg transition-all duration-200
+           hover:shadow-lg hover:shadow-vibrant-violet/25
+           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-dark-gray font-medium px-5 py-2.5 rounded-lg
+           border border-light-gray transition-all duration-200
+           hover:bg-off-white hover:border-mid-gray
+           active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply text-dark-gray font-medium px-4 py-2 rounded-lg
+           transition-all duration-200 hover:bg-light-gray/50
+           active:scale-[0.98];
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-light-gray/50 shadow-sm
+           hover:shadow-md transition-shadow duration-200;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2.5 rounded-lg border border-light-gray
+           bg-white text-near-black placeholder:text-mid-gray
+           focus:outline-none focus:ring-2 focus:ring-vibrant-violet/20 focus:border-vibrant-violet
+           transition-all duration-200;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-violet {
+    @apply badge bg-vibrant-violet/10 text-vibrant-violet;
+  }
+
+  .badge-green {
+    @apply badge bg-study-green/10 text-study-green;
+  }
+
+  .badge-amber {
+    @apply badge bg-alert-amber/10 text-alert-amber;
+  }
+
+  .badge-red {
+    @apply badge bg-error-red/10 text-error-red;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
+  }
+
+  .section-title {
+    @apply text-2xl font-bold text-near-black;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-vibrant-violet to-electric-blue bg-clip-text text-transparent;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
