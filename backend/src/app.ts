@@ -9,6 +9,8 @@ import courseRoutes from './routes/courses';
 import noteRoutes from './routes/notes';
 import documentRoutes from './routes/documents';
 import tutorRoutes from './routes/tutor';
+import plannerRoutes from './routes/planner';
+import examRoutes from './routes/exams';
 
 const app = express();
 
@@ -47,6 +49,8 @@ app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/courses/:courseId/notes', noteRoutes);
 app.use('/api/v1/courses/:courseId/documents', documentRoutes);
 app.use('/api/v1/tutor', tutorRoutes);
+app.use('/api/v1/planner', plannerRoutes);
+app.use('/api/v1/exams', examRoutes);
 
 // 404 handler
 app.use((_req, res) => {

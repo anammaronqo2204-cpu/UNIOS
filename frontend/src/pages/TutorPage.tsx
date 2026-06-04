@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles } from 'lucide-react';
+import { apiClient } from '../api/client';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -15,6 +16,7 @@ export default function TutorPage() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,17 +31,35 @@ export default function TutorPage() {
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
-    // Simulate AI response (will connect to backend)
-    setTimeout(() => {
+    try {
+      const response = await apiClient.post('/tutor/chat', {
+        message: userMessage,
+        sessionId: sessionId || undefined,
+      });
+
+      if (response.data.sessionId) {
+        setSessionId(response.data.sessionId);
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `That's a great question about "${userMessage.slice(0, 50)}..." Let me break this down for you.\n\nFirst, let's understand the core concept. Think of it like this: **everything builds on fundamentals**.\n\nWhat would you like me to explain first?`,
+          content: response.data.message,
         },
       ]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: "Sorry, I'm having trouble connecting to my brain right now. Please try again later.",
+        },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (

@@ -7,6 +7,7 @@ import db from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { config } from '../config';
+import { documentProcessor } from '../services/ai/documentProcessor';
 
 const router = Router({ mergeParams: true });
 
@@ -82,7 +83,52 @@ router.post(
 
       const doc = await db('documents').where({ id }).first();
 
-      // TODO: Trigger async processing (extract text, vectorize, etc.)
+      // Trigger async processing
+      if (docType === 'pdf') {
+        documentProcessor.processPdf(req.file.path).then(async (result) => {
+          try {
+            // Update document
+            await db('documents').where({ id }).update({
+              content_text: result.text,
+              status: 'ready',
+              metadata: JSON.stringify({ summary: result.summary }),
+            });
+
+            // Insert flashcards
+            if (result.flashcards && result.flashcards.length > 0) {
+              const flashcardsToInsert = result.flashcards.map(f => ({
+                id: uuidv4(),
+                user_id: req.user!.userId,
+                course_id: req.params.courseId,
+                question: f.question,
+                answer: f.answer,
+              }));
+              await db('flashcards').insert(flashcardsToInsert);
+            }
+
+            // Insert quiz as an exam
+            if (result.quiz && result.quiz.length > 0) {
+              await db('exams').insert({
+                id: uuidv4(),
+                user_id: req.user!.userId,
+                course_id: req.params.courseId,
+                title: `Quiz: ${req.file!.originalname}`,
+                questions_json: JSON.stringify(result.quiz),
+                status: 'pending',
+              });
+            }
+          } catch (error) {
+            console.error(`Error background processing document ${id}:`, error);
+            await db('documents').where({ id }).update({ status: 'error' });
+          }
+        }).catch(async (error) => {
+          console.error(`Background processing failed for document ${id}:`, error);
+          await db('documents').where({ id }).update({ status: 'error' });
+        });
+      } else {
+        // For non-PDF types, mark as ready for now (placeholder)
+        await db('documents').where({ id }).update({ status: 'ready' });
+      }
 
       res.status(201).json({
         id: doc.id,
@@ -121,6 +167,33 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     })));
   } catch (err) {
     console.error('List documents error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /documents/:docId - Get document details/status
+router.get('/:docId', authenticate, async (req: Request, res: Response) => {
+  try {
+    const doc = await db('documents')
+      .where({ id: req.params.docId, user_id: req.user!.userId })
+      .first();
+
+    if (!doc) {
+      res.status(404).json({ error: 'Document not found' });
+      return;
+    }
+
+    res.json({
+      id: doc.id,
+      type: doc.type,
+      fileName: doc.file_name,
+      fileSize: doc.file_size,
+      status: doc.status,
+      summary: doc.metadata ? JSON.parse(doc.metadata).summary : null,
+      createdAt: doc.created_at,
+    });
+  } catch (err) {
+    console.error('Get document error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

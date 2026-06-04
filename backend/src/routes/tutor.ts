@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { tutorService } from '../services/ai/tutorService';
 
 const router = Router();
 
@@ -54,9 +55,16 @@ router.post('/chat', authenticate, validate(chatSchema), async (req: Request, re
       .where({ session_id: session.id })
       .orderBy('created_at', 'asc');
 
-    // TODO: Route to appropriate AI model based on context
-    // For now, return a placeholder response
-    const assistantMessage = `**AI Tutor**: Great question about "${message.slice(0, 50)}..."\n\nLet me help you understand this concept. Could you tell me what you already know about this topic so I can tailor my explanation to your level?`;
+    const chatMessages = [
+      ...history.map((m: any) => ({
+        role: m.role as 'user' | 'assistant' | 'system',
+        content: m.content,
+      })),
+      { role: 'user' as const, content: message },
+    ];
+
+    // Use AI Tutor service
+    const assistantMessage = await tutorService.chat(chatMessages) || 'Sorry, I am having trouble connecting to my brain right now.';
 
     // Save assistant message
     const assistantMsgId = uuidv4();
